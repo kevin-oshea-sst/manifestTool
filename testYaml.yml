@@ -1,0 +1,168 @@
+---
+- name: install com.seastreet.stratos.rd.scriptrunner-mock RD
+  import_tasks: publish_rd.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.rd
+    maven_artifactId: com.seastreet.stratos.rd.scriptrunner-mock
+    maven_version: 1.0.0-20210426.123523-4
+    maven_repository_type: SNAPSHOT
+    when: inventory_hostname in groups['sst_re']
+- name: install mock-lib RD
+  import_tasks: publish_rd.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.rd
+    maven_artifactId: mock-lib
+    maven_version: 0.1.1-20210416.195008-1
+    maven_repository_type: SNAPSHOT
+    when: inventory_hostname in groups['sst_re']
+- name: install com.seastreet.stratos.rd.panorama-mock RD
+  import_tasks: publish_rd.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.rd
+    maven_artifactId: com.seastreet.stratos.rd.panorama-mock
+    maven_version: 1.0.1-20210914.055130-53
+    maven_repository_type: SNAPSHOT
+    when: inventory_hostname in groups['sst_re']
+- name: install com.seastreet.stratos.rd.secure-transport-domain-mock RD
+  import_tasks: publish_rd.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.rd
+    maven_artifactId: com.seastreet.stratos.rd.secure-transport-domain-mock
+    maven_version: 1.0.1-20211006.173448-22
+    maven_repository_type: SNAPSHOT
+    when: inventory_hostname in groups['sst_re']
+- name: install secure-transport-domain-model RD
+  import_tasks: publish_rd.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.rd
+    maven_artifactId: secure-transport-domain-model
+    maven_version: 1.0.1-20211006.173439-23
+    maven_repository_type: SNAPSHOT
+    when: inventory_hostname in groups['sst_re']
+- name: install com.seastreet.stratos.rd.cloudgenix RD
+  import_tasks: publish_rd.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.rd
+    maven_artifactId: com.seastreet.stratos.rd.cloudgenix
+    maven_version: 1.0.1-20211019.171801-33
+    maven_repository_type: SNAPSHOT
+    when: inventory_hostname in groups['sst_re']
+- name: install com.seastreet.stratos.rd.panorama RD
+  import_tasks: publish_rd.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.rd
+    maven_artifactId: com.seastreet.stratos.rd.panorama
+    maven_version: 1.5.1-20211021.161357-7
+    maven_repository_type: SNAPSHOT
+    when: inventory_hostname in groups['sst_re']
+- name: install com.seastreetinc.rd.scriptrunner RD
+  import_tasks: publish_rd.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.rd
+    maven_artifactId: com.seastreetinc.rd.scriptrunner
+    maven_version: 1.0.5-20210426.135947-3
+    maven_repository_type: SNAPSHOT
+    when: inventory_hostname in groups['sst_re']
+- name: install komainu objectives
+  import_tasks: publish_objective.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.package
+    maven_artifactId: komainu
+    maven_version: 1.0.5.2-20210913.182925-8
+    maven_repository_type: SNAPSHOT
+    objective_package_version: 1.0
+    objective_package_patch: 5.2-SNAPSHOT
+    when: inventory_hostname in groups['sst_server']
+- name: install secureEdge objectives
+  import_tasks: publish_objective.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.package
+    maven_artifactId: secureEdge
+    maven_version: 1.0.2.1-20210915.110436-186
+    maven_repository_type: SNAPSHOT
+    objective_package_version: 1.0
+    objective_package_patch: 2.1-SNAPSHOT
+    when: inventory_hostname in groups['sst_server']
+- name: install tmfService objectives
+  import_tasks: publish_objective.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.package
+    maven_artifactId: tmfService
+    maven_version: 1.2.0.7
+    maven_repository_type: RELEASE
+    objective_package_version: 1.2.0
+    objective_package_patch: null
+    when: inventory_hostname in groups['sst_server']
+- name: install securityPolicy objectives
+  import_tasks: publish_objective.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.package
+    maven_artifactId: securityPolicy
+    maven_version: 1.0.2-20211020.174433-20
+    maven_repository_type: SNAPSHOT
+    objective_package_version: 1.0
+    objective_package_patch: 2-SNAPSHOT
+    when: inventory_hostname in groups['sst_server']
+- name: install customerTransportSDWAN objectives
+  import_tasks: publish_objective.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.package
+    maven_artifactId: customerTransportSDWAN
+    maven_version: 1.1.0-20211020.190329-207
+    maven_repository_type: SNAPSHOT
+    objective_package_version: 1.1
+    objective_package_patch: 0-SNAPSHOT
+    when: inventory_hostname in groups['sst_server']
+- name: install managedPolicy objectives
+  import_tasks: publish_objective.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.package
+    maven_artifactId: managedPolicy
+    maven_version: 1.1.1.1-20211020.185806-117
+    maven_repository_type: SNAPSHOT
+    objective_package_version: 1.1
+    objective_package_patch: 1.1-SNAPSHOT
+    when: inventory_hostname in groups['sst_server']
+- name: install aws scripts
+  import_tasks: publish_scriptrepo.yml
+  vars:
+    maven_groupId: com.seastreet.scripts
+    maven_artifactId: aws
+    maven_version: 2.0.1-20210930.155327-2
+    maven_repository_type: SNAPSHOT
+    when: inventory_hostname in groups['sst_re']
+- name: install panorama scripts
+  import_tasks: publish_scriptrepo.yml
+  vars:
+    maven_groupId: com.seastreet.scripts
+    maven_artifactId: panorama
+    maven_version: 2.0.1-20210930.213652-4
+    maven_repository_type: SNAPSHOT
+    when: inventory_hostname in groups['sst_re']
+- name: install cloudgenix scripts
+  import_tasks: publish_scriptrepo.yml
+  vars:
+    maven_groupId: com.seastreet.scripts
+    maven_artifactId: cloudgenix
+    maven_version: 1.0.1-20211020.203520-16
+    maven_repository_type: SNAPSHOT
+    when: inventory_hostname in groups['sst_re']
+- name: install SDWanUseCase jar-with-dependencies artifact
+  import_tasks: publish_artifact.yml
+  vars:
+    maven_groupId: com.seastreet.test
+    maven_artifactId: SDWanUseCase
+    maven_version: 1.1.1-20211022.161449-29
+    maven_repository_type: SNAPSHOT
+    maven_type: jar
+    maven_classifier: jar-with-dependencies
+    when: inventory_hostname in groups['sst_server'][0]
+- name: install sdwan-portal artifact
+  import_tasks: publish_artifact.yml
+  vars:
+    maven_groupId: com.seastreet
+    maven_artifactId: sdwan-portal
+    maven_version: 1.0.1-20211018.180501-42
+    maven_repository_type: SNAPSHOT
+    maven_type: war
+    when: inventory_hostname in groups['sst_server'][0]

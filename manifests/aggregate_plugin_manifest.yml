@@ -1,0 +1,45 @@
+---
+- name: install vdcm objectives
+  import_tasks: publish_objective.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.package
+    maven_artifactId: vdcm
+    maven_version: 1.0.23
+    maven_repository_type: RELEASE
+    objective_package_version: 1.0
+    objective_package_patch: 23
+  when: inventory_hostname in groups['sst_server']
+- name: install encoder objectives
+  import_tasks: publish_objective.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.package.vdcm-3.2
+    maven_artifactId: encoder
+    maven_version: 3.2.6
+    maven_repository_type: RELEASE
+    objective_package_version: 3.2
+    objective_package_patch: 6
+  when: inventory_hostname in groups['sst_server']
+- name: install com.seastreetinc.rd.scriptrunner RD
+  import_tasks: publish_rd.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.rd
+    maven_artifactId: com.seastreetinc.rd.scriptrunner
+    maven_version: 1.0.4
+    maven_repository_type: RELEASE
+  when: inventory_hostname in groups['sst_re']
+- name: install com.seastreetinc.rd.vdcm RD
+  import_tasks: publish_rd.yml
+  vars:
+    maven_groupId: com.seastreet.stratos.rd
+    maven_artifactId: com.seastreetinc.rd.vdcm
+    maven_version: 1.0.20
+    maven_repository_type: RELEASE
+  when: inventory_hostname in groups['sst_re']
+- name: install vdcm scripts
+  import_tasks: publish_scriptrepo.yml
+  vars:
+    maven_groupId: com.seastreet.scripts
+    maven_artifactId: vdcm
+    maven_version: 1.0.23
+    maven_repository_type: RELEASE
+  when: inventory_hostname in groups['sst_re']
