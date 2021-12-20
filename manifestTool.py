@@ -13,9 +13,9 @@ getHeaders = {'accept': 'application/json'}
 payload = { "format": "repr" }
 
 arguments = sys.argv[1:]
-# defaulting for testing, can be passed in
+# defaulting to https and 8443 due to telstra running in ssl
 serverIp = "https://localhost:8443"
-manifestFileName = "/root/manifest/manifests/aggregate_plugin_manifest.yml"
+manifestFileName = "/root/manifestTool/manifests/aggregate_plugin_manifest.yml"
 
 
 while len(arguments):
@@ -61,20 +61,13 @@ with open(manifestFileName, "r") as stream:
 # get the re endpoint for RE VIP info
 # if returns ! 200, throw error and end
 # if there are no attached re's, throw error and end. May be better to continue as normal as low chance
-# interate through the re vips, adding the urls but removing /re
+# interate through the re vips, adding the urls to primaryRes but removing /re
 primaryRes = []
-try:
-    #print(f'{serverIp}/genesys/diag/health/re')
-    r = requests.get(f'{serverIp}/genesys/diag/health/re', auth=('admin', 'admin'), headers=getHeaders, verify=False)
-except Exception as e:
-    print(str(e))
-    print("Please check the status of the server and try again")
-    sys.exit(1)
-
+r = requests.get(f'{serverIp}/genesys/diag/health/re', auth=('admin', 'admin'), headers=getHeaders, verify=False)
 # if server encounters an error or no RE's are attached, end
 if(r.status_code != 200):
     print(r.status_code)
-    print("Please check the status of the RE")
+    print("Response to pinging RE endpoint was not 200, please check the status of the Server and try again")
     sys.exit(1)
 elif(len(r.json()["attachedReList"]) == 0):
     print("Please check if RE's are attached and try again")
@@ -86,9 +79,9 @@ else:
 rdDict = {}
 # creating a empty dictonary to hold resource driver keys + values
 # iterate through all drivers (both RE VIPS), storing name / version as key value pairs
-# check if the version is 2.12 or 2.11, then loop through
+# check if the version is 2.12 or 2.11 or less, then loop through
+# note that 9.9.9 denotes a personal build and as of time of writing is ~ 2.12
 for i in primaryRes:
-    # if the attached RE has a trailing '/', remove
     if(i[-1] == '/'):
         i = i[0:-1]
     r = requests.get(f'{i}/re/buildInfo', auth=('admin', 'admin'), headers=getHeaders, verify=False)
@@ -99,15 +92,18 @@ for i in primaryRes:
         # test if details or plugins exist in r.json() depedning on version #
         # if so, test if drivers or plugins exist below that
         # neither of above, means no drivers? Not sure what that state means
-    elif(r.json()["version"].split('.')[1] == 12 or r.json()["version"].split('-')[0] == '9.9.9'):
+    elif(r.json()["version"].split('.')[1] == '12' or r.json()["version"].split('-')[0] == '9.9.9'):
         if(not "details" in r.json() or not "plugins" in r.json()["details"]):
-            print('Server encountered an error, please reach out to seastreet support')
+            print('REs encountered an error retriving list of 2.12 RD values, please reach out to seastreet support')
             sys.exit(1)
         for rd in r.json()["plugins"]["plugin"]:
             rdDict[rd["name"]] = rd["version"]
+    elif(r.json()["version"].split('.')[1] == '7'):
+        print("ManifestTool is not supported on StratOS version 2.7, exiting")
+        sys.exit(127)
     else:
         if(not "details" in r.json() or not "drivers" in r.json()["details"]):
-            print('Server encountered an error, please reach out to seastreet support')
+            print('REs encountered an error retriving list of 2.7 + RD values, please reach out to seastreet support')
             sys.exit(1)
         for rd in r.json()["details"]["drivers"]:
             rdDict[rd["name"]] = rd["version"]
@@ -118,7 +114,6 @@ for i in parsedYml:
 
 # if the groupId ends in "package", check against the server
 # if the groupId ends in "rd", check against the re buildInfo
-# if the groupId ends in "script". Check against /opt/scriptrepo/
 # otherwise, probably throw an error
 
     # split the groupId field by '.' and get the last one
@@ -164,8 +159,4 @@ for i in parsedYml:
         else:
             print("Resource Driver \'" + mavenArtifactId + "\' does not match any known RD on the server")
             print("\n")
-    
-    # elif(i["vars"]["maven_groupId"].split('.')[-1] == "scripts"):
-    #     print(mavenArtifactId)
-    #     if(os.path.exists("/home/stratos/test.txt")):
 sys.exit(0)
