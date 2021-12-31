@@ -16,6 +16,13 @@ arguments = sys.argv[1:]
 # defaulting to https and 8443 due to telstra running in ssl
 serverIp = "https://localhost:8443"
 manifestFileName = "/root/manifestTool/manifests/aggregate_plugin_manifest.yml"
+noCompare = False
+
+# basic flow
+
+# checks if re's are attached. If yes, gets url of all attached
+# pings the /re/buildInfo of each re, getting dict of all RD's
+# parses yaml file, pinging the specific package for version number or checking against dict above
 
 
 while len(arguments):
@@ -29,6 +36,10 @@ while len(arguments):
         print("Defaults to https, port 8443. Use this flag to set to http, port 8080")
         print("Value: flag only")
         print("\n")
+        print("-dry: only prints RD/Package versions on the server/re")
+        print("Defaults to false.")
+        print("Value: flag only")
+        print("\n")
         sys.exit(0)
         # print("-server: full url of the server you wish to run against")
         # print("E.G https://192.168.56.105:8443")
@@ -38,25 +49,20 @@ while len(arguments):
     elif(arguments[0] == '-http'):
         serverIp = "http://localhost:8080"
         arguments = arguments[1:]
-    # taking out due to paring down of script; script will assume localhost:8443 @ telstra
-    # elif(arguments[0] == '-server'):
-    #     stringI = str(arguments[1])
-    #     if(not stringI[0:4] == "http"):
-    #         print("Please pass in the URL of the server you wish to check against")
-    #         print("Example: http://localhost:8080")
-    #         sys.exit(1)
-    #     serverIp = str(arguments[1])
-    #     arguments = arguments[2:]
+    elif(arguments[0] == '-dry'):
+        noCompare = True
+        arguments = arguments[1:]
     else:
         print("Flag not recognized, please try again or use the -help flag for usage info")
         sys.exit(1)
 
-with open(manifestFileName, "r") as stream:
-    try:
-        parsedYml = yaml.safe_load(stream)
-    except yaml.YAMLError as exc:
-        print(exc)
-        sys.exit(1)
+if(not noCompare):
+    with open(manifestFileName, "r") as stream:
+        try:
+            parsedYml = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+            sys.exit(1)
 
 # get the re endpoint for RE VIP info
 # if returns ! 200, throw error and end
@@ -76,6 +82,14 @@ else:
     for i in r.json()["attachedReList"]:
         primaryRes.append(i["primaryReUrl"][0:-3])
 
+# if dry run, simply print the version number
+if(noCompare):
+    r = requests.get(f'{serverIp}/genesys/package?format=repr', auth=('admin', 'admin'), headers=getHeaders, verify=False)
+    if(r.status_code == 200):
+        for packages in r.json():
+            totalVersion = packages["version"] + "." + packages["tags"][0].split('=')[-1]
+            print("Package " + packages["name"] + " is currently at version " + totalVersion)
+
 rdDict = {}
 # creating a empty dictonary to hold resource driver keys + values
 # iterate through all drivers (both RE VIPS), storing name / version as key value pairs
@@ -92,21 +106,34 @@ for i in primaryRes:
         # test if details or plugins exist in r.json() depedning on version #
         # if so, test if drivers or plugins exist below that
         # neither of above, means no drivers? Not sure what that state means
-    elif(r.json()["version"].split('.')[1] == '12' or r.json()["version"].split('-')[0] == '9.9.9'):
+    elif((r.json()["version"].split('.')[1] == '12' ) or r.json()["version"].split('-')[0] == '9.9.9'):
         if(not "details" in r.json() or not "plugins" in r.json()["details"]):
-            print('REs encountered an error retriving list of 2.12 RD values, please reach out to seastreet support')
+            print(r.json())
+            print('REs encountered an error retriving list of 2.11, 2.12 RD values, please reach out to seastreet support')
             sys.exit(1)
-        for rd in r.json()["plugins"]["plugin"]:
-            rdDict[rd["name"]] = rd["version"]
+        # if dry run, print version numbers and exit
+        if(noCompare):
+            for rd in r.json()["details"]["plugins"]:
+                print("Resource driver " + rd["name"] + " is currently at version " + rd["version"])
+            sys.exit(0)
+        else:
+            for rd in r.json()["details"]["plugins"]:
+                rdDict[rd["name"]] = rd["version"]
     elif(r.json()["version"].split('.')[1] == '7'):
         print("ManifestTool is not supported on StratOS version 2.7, exiting")
         sys.exit(127)
     else:
         if(not "details" in r.json() or not "drivers" in r.json()["details"]):
-            print('REs encountered an error retriving list of 2.7 + RD values, please reach out to seastreet support')
+            print('REs encountered an error retriving list of 2.7, 2.9 RD values, please reach out to seastreet support')
+            sys.exit(0)
+        # if dry run, print version numbers and exit
+        if(noCompare):
+            for rd in r.json()["details"]["drivers"]:
+                print("Resource driver " + rd["name"] + " is currently at version " + rd["version"])
             sys.exit(1)
-        for rd in r.json()["details"]["drivers"]:
-            rdDict[rd["name"]] = rd["version"]
+        else:
+            for rd in r.json()["details"]["drivers"]:
+                rdDict[rd["name"]] = rd["version"]
 
 for i in parsedYml:
     mavenArtifactId = i["vars"]["maven_artifactId"]
