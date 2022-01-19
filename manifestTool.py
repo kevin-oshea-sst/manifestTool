@@ -17,9 +17,6 @@ arguments = sys.argv[1:]
 serverIp = "https://localhost:8443"
 manifestFileName = "/root/manifestTool/manifests/aggregate_plugin_manifest.yml"
 noCompare = False
-
-# basic flow
-
 # checks if re's are attached. If yes, gets url of all attached
 # pings the /re/buildInfo of each re, getting dict of all RD's
 # parses yaml file, pinging the specific package for version number or checking against dict above
@@ -41,9 +38,14 @@ while len(arguments):
         print("Value: flag only")
         print("\n")
         sys.exit(0)
-        # print("-server: full url of the server you wish to run against")
-        # print("E.G https://192.168.56.105:8443")
     elif(arguments[0] == '-file'):
+        try:
+            if(not arguments[1] is None ):
+                if(arguments[1][0:1] == "-"):
+                    raise Exception("")
+        except:
+            print("Please pass in a value for the -file flag")
+            sys.exit(1)
         manifestFileName = arguments[1]
         arguments = arguments[2:]
     elif(arguments[0] == '-http'):
@@ -65,11 +67,18 @@ if(not noCompare):
             sys.exit(1)
 
 # get the re endpoint for RE VIP info
+# if http error connecting (server down) then catches error and ends
 # if returns ! 200, throw error and end
 # if there are no attached re's, throw error and end. May be better to continue as normal as low chance
 # interate through the re vips, adding the urls to primaryRes but removing /re
 primaryRes = []
-r = requests.get(f'{serverIp}/genesys/diag/health/re', auth=('admin', 'admin'), headers=getHeaders, verify=False)
+r = ""
+try:
+    r = requests.get(f'{serverIp}/genesys/diag/health/re', auth=('admin', 'admin'), headers=getHeaders, verify=False)
+except:
+    print("Please check the status of the server and try again")
+    sys.exit(2)
+
 # if server encounters an error or no RE's are attached, end
 if(r.status_code != 200):
     print(r.status_code)
@@ -93,12 +102,19 @@ if(noCompare):
 rdDict = {}
 # creating a empty dictonary to hold resource driver keys + values
 # iterate through all drivers (both RE VIPS), storing name / version as key value pairs
+# if RE is off, throw error and end
 # check if the version is 2.12 or 2.11 or less, then loop through
 # note that 9.9.9 denotes a personal build and as of time of writing is ~ 2.12
 for i in primaryRes:
     if(i[-1] == '/'):
         i = i[0:-1]
-    r = requests.get(f'{i}/re/buildInfo', auth=('admin', 'admin'), headers=getHeaders, verify=False)
+    r = ""
+    try:
+        r = requests.get(f'{i}/re/buildInfo', auth=('admin', 'admin'), headers=getHeaders, verify=False)
+    except:
+        print("Please check the status of RE {i} and try again")
+        sys.exit(2)
+
     if(r.status_code != 200):
         print(r.status_code)
         print(f'Please check the status of RE {i}')
