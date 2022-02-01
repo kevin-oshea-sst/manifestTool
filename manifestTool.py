@@ -17,6 +17,8 @@ arguments = sys.argv[1:]
 serverIp = "https://localhost:8443"
 manifestFileName = "/root/manifestTool/manifests/aggregate_plugin_manifest.yml"
 noCompare = False
+user = "admin"
+passwd = "admin"
 # checks if re's are attached. If yes, gets url of all attached
 # pings the /re/buildInfo of each re, getting dict of all RD's
 # parses yaml file, pinging the specific package for version number or checking against dict above
@@ -28,6 +30,12 @@ while len(arguments):
         print("-file: file path to manifest")
         print("Defaults to /root/manifest/manifests/aggregate_plugin_manifest.yml")
         print("Value: file path")
+        print("\n")
+        print("-user: password to authenticate to the server with")
+        print("Value: string")
+        print("\n")
+        print("-passwd: password to authenticate to the server with")
+        print("Value: string")
         print("\n")
         print("-http: sets manifest tool to use port 8080")
         print("Defaults to https, port 8443. Use this flag to set to http, port 8080")
@@ -47,6 +55,26 @@ while len(arguments):
             print("Please pass in a value for the -file flag")
             sys.exit(1)
         manifestFileName = arguments[1]
+        arguments = arguments[2:]
+    elif(arguments[0] == '-user'):
+        try:
+            if(not arguments[1] is None ):
+                if(arguments[1][0:1] == "-"):
+                    raise Exception("")
+        except:
+            print("Please pass in a value for the -user flag")
+            sys.exit(1)
+        user = arguments[1]
+        arguments = arguments[2:]
+    elif(arguments[0] == '-passwd'):
+        try:
+            if(not arguments[1] is None ):
+                if(arguments[1][0:1] == "-"):
+                    raise Exception("")
+        except:
+            print("Please pass in a value for the -passwd flag")
+            sys.exit(1)
+        passwd = arguments[1]
         arguments = arguments[2:]
     elif(arguments[0] == '-http'):
         serverIp = "http://localhost:8080"
@@ -74,7 +102,7 @@ if(not noCompare):
 primaryRes = []
 r = ""
 try:
-    r = requests.get(f'{serverIp}/genesys/diag/health/re', auth=('admin', 'admin'), headers=getHeaders, verify=False)
+    r = requests.get(f'{serverIp}/genesys/diag/health/re', auth=(f'{user}', f'{passwd}'), headers=getHeaders, verify=False)
 except:
     print("Please check the status of the server and try again")
     sys.exit(2)
@@ -93,7 +121,7 @@ else:
 
 # if dry run, simply print the version number
 if(noCompare):
-    r = requests.get(f'{serverIp}/genesys/package?format=repr', auth=('admin', 'admin'), headers=getHeaders, verify=False)
+    r = requests.get(f'{serverIp}/genesys/package?format=repr', auth=(f'{user}', f'{passwd}'), headers=getHeaders, verify=False)
     if(r.status_code == 200):
         for packages in r.json():
             totalVersion = packages["version"] + "." + packages["tags"][0].split('=')[-1]
@@ -110,7 +138,7 @@ for i in primaryRes:
         i = i[0:-1]
     r = ""
     try:
-        r = requests.get(f'{i}/re/buildInfo', auth=('admin', 'admin'), headers=getHeaders, verify=False)
+        r = requests.get(f'{i}/re/buildInfo', auth=(f'{user}', f'{passwd}'), headers=getHeaders, verify=False)
     except:
         print("Please check the status of RE {i} and try again")
         sys.exit(2)
@@ -161,7 +189,7 @@ for i in parsedYml:
 
     # split the groupId field by '.' and get the last one
     if(i["vars"]["maven_groupId"].split('.')[-1] == "package"):
-        r = requests.get(f'{serverIp}/genesys/package/{mavenArtifactId}?format=repr', auth=('admin', 'admin'), headers=getHeaders, verify=False)
+        r = requests.get(f'{serverIp}/genesys/package/{mavenArtifactId}?format=repr', auth=(f'{user}', f'{passwd}'), headers=getHeaders, verify=False)
         # does it return a valid response?
         # does it match in both name and version.
         if(r.status_code == 200):
